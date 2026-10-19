@@ -1,5 +1,9 @@
-# tag 推送 → 自动建 GitHub Release（notes 取 CHANGELOG 对应段）。
+# tag 推送 → ① npm 发布（OIDC Trusted Publishing）→ ② 建 GitHub Release。
 # 发版流程见 AGENTS.md「发布」：本地验证通过后再推 tag。
+#
+# npm 侧一次性配置（包页 → Settings → Trusted Publisher → GitHub Actions）：
+#   Repository = ShineBreaker/dsh-atelier，Workflow filename = release.yml。
+# 新配置 2 天内须有一次成功 OIDC 发布否则过期——配完 TP 后尽快发一版激活。
 name: release
 
 on:
@@ -10,7 +14,38 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  # ── 1. npm 发布（Trusted Publishing / OIDC，无长效 token）────────────
+  # 幂等守卫：版本已存在于 registry 即跳过。首发必须是手工 publish（包先
+  # 存在才能配 Trusted Publisher），且 name@version 永久不可复用——守卫
+  # 保证重复推同一 tag 不会把 job 炸在 ENEEDAUTH/EEXIST 上。
+  npm-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC 必需
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # provenance 需要 git 元数据
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false # 发布构建禁用缓存
+      # Node 24  bundled npm 可能低于 TP 硬性要求的 11.5.1，显式升级兜底
+      - run: npm i -g npm@latest
+      - name: 发布（已存在则跳过）
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          if npm view "dsh-atelier-agent@$ver" version >/dev/null 2>&1; then
+            echo "::notice::dsh-atelier-agent@$ver 已在 registry，跳过发布"
+            exit 0
+          fi
+          npm publish --provenance --access public
+
+  # ── 2. GitHub Release（notes 取 CHANGELOG 对应段）──────────────────
+  github-release:
+    needs: npm-publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

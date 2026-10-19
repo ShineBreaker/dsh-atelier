@@ -13,8 +13,10 @@ agent）**互补共存**：轻量子任务走 `subagent`，跨 CLI 厂商/持久
 ## 安装
 
 ```sh
+# npm（发布后）
+dsh plugin --profile <name> add dsh-atelier-agent@<version>
+# 开发期：本地仓库
 dsh plugin --profile <name> add git+file:///path/to/dsh-atelier
-# 或发布后：dsh plugin --profile <name> add git+ssh://git@github.com/<you>/dsh-atelier.git
 ```
 
 装完在 profile 的 `cordis.patch.yml` 加挂载行（裸包名，勿用子路径）：
