@@ -1,4 +1,4 @@
-# AGENTS.md — dsh-atelier
+# AGENTS.md — dsh-atelier-agent
 
 DeepSeek Harness（DSH）的 atelier 移植版：基于 herdr/tmux 分屏的 **外部 agent CLI 编排**插件。`peer` 工具把任务派发到分屏 pane 里的持久 harness 会话（pi/hermes/claude/codex/任意 TUI agent），文件契约（`brief-N/result-N/status.json`）回收结果，harness 原生 resume 无损恢复。与 dsh 原生 `subagent`（进程内子 agent）**互补共存**：轻量子任务走 subagent，跨 CLI/持久/可见的编排走 peer。
 
@@ -20,7 +20,7 @@ DeepSeek Harness（DSH）的 atelier 移植版：基于 herdr/tmux 分屏的 **�
 - **禁 import `@deepseek-ai/*`**（link: 部署解析不到共享 fallback；agenote 同款禁令）。`createUserMessage` 等在 `lib/` 复刻。
 - **工具名 `peer`，不抢 `subagent`**：早期方案曾遮蔽原生 `subagent`（own 层手术摘除），后改为互补设计——原生工具族原样保留，atelier 以独立名字注册，零冲突、零时机敏感。教训存档：own 层工具不能 restrict/unregister、只能 `layers.peek(agent).tools.data.delete`，且 createAgent 期间 own 层插入晚于 `agent/created` 事件——若未来再需要遮蔽，机制是 `agent/created`→`setImmediate`→`restrict(deny)`（遮继承面）→`data.delete`（摘 own 层）→own 层注册。
 - **配置**：`~/.config/dsh-atelier/atelier.json` 优先，`~/.config/pi/atelier.json` 迁移回退。peer 目录 `$XDG_CACHE/dsh-atelier/subagents`；registry `$XDG_DATA/dsh-atelier/atelier-registry.db`。
-- **source kind**：自投递消息带 `source:{kind:"plugin:dsh-atelier"}`，durable log 里可识别。
+- **source kind**：自投递消息带 `source:{kind:"plugin:dsh-atelier-agent"}`，durable log 里可识别。
 - **pi 会话迁移**：`core/session.ts` 的 `hostSession.id` 由 `agent/created` 锚定（`session.header.id`），孤儿认领据此归属。
 - `.ts` 迁移层依赖 Node ≥23.6 type stripping；`bun:sqlite` 已换成 `node:sqlite`。
 

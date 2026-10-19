@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 /**
- * dsh-atelier 入口 — peer 编排 bundle。
+ * dsh-atelier-agent 入口 — peer 编排 bundle。
  *
  * pi atelier 的 dsh 移植：peer 工具派发到 herdr/tmux 分屏 pane 里的
  * 持久 harness 会话（claude/codex/hermes/pi/…），文件契约
@@ -22,7 +22,7 @@ import * as commands from "./commands.js";
 import * as hooks from "./hooks.js";
 import { loadConfig } from "./core/config.ts";
 
-export const name = "dsh-atelier";
+export const name = "dsh-atelier-agent";
 
 /** 聚合各半边需要的服务。 */
 export const inject = ["tools", "commands", "systemPrompt", "llm"];

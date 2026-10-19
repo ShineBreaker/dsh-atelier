@@ -3,6 +3,19 @@
 本文件采用 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。
 版本号语义：patch=不改行为（可攒批）、minor=新能力/行为变化、高危走 -rc.n。
 
+## [Unreleased]
+
+### Changed
+
+- 包名（分发身份）`dsh-atelier` → `dsh-atelier-agent`：npm 上原名已被第三方
+  无关项目占用（hurricant/aidenli，0.3.4）。同步改名：`package.json` name、
+  `cordis.patch.yml` 挂载行、`index.js` name 导出、命令 definitionId 前缀、
+  durable log source kind（`plugin:dsh-atelier-agent`）。
+- XDG 数据路径不变（`~/.config/dsh-atelier`、`$XDG_CACHE/dsh-atelier/
+  subagents`、registry db），既有配置与 run 状态继续生效。
+- 已装 profile 需把 dependencies 与 `dsh.profile.bundles` 里的 `dsh-atelier`
+  改为 `dsh-atelier-agent`（link: 路径不变），否则 bundle 解析不到。
+
 ## [0.2.0] - 2026-10-19
 
 peer 编排半边落地：`peer` 工具把任务派发到 herdr/tmux 分屏 pane 里的持久

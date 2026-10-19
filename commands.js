@@ -58,7 +58,7 @@ export function apply(ctx, cfg) {
   for (const agent of agents) {
     disposers.push(
       ctx.commands.register({
-        definitionId: `dsh-atelier.agent.${agent.name}`,
+        definitionId: `dsh-atelier-agent.agent.${agent.name}`,
         name: agent.name,
         description: `${agent.description}（/${agent.name} <任务描述>）`,
         handler: async (invocation) => {
@@ -131,7 +131,7 @@ export function apply(ctx, cfg) {
     if (agentNames.has(prompt.name)) continue; // 与 agent 命令冲突，跳过
     disposers.push(
       ctx.commands.register({
-        definitionId: `dsh-atelier.prompt.${prompt.name}`,
+        definitionId: `dsh-atelier-agent.prompt.${prompt.name}`,
         name: prompt.name,
         description: `${prompt.description}（/${prompt.name} <${prompt.param}>）`,
         handler: async (invocation) => {
@@ -198,7 +198,7 @@ export function apply(ctx, cfg) {
   // ── /atelier-resume <parentRunId> ────────────────────────────────────
   disposers.push(
     ctx.commands.register({
-      definitionId: "dsh-atelier.resume",
+      definitionId: "dsh-atelier-agent.resume",
       name: "atelier-resume",
       description: "从 checkpoint 续跳 chain。用法: /atelier-resume <parentRunId>",
       handler: async (invocation) => {
@@ -265,7 +265,7 @@ export function apply(ctx, cfg) {
   // ── /atelier-workflow list|show <id> ─────────────────────────────────
   disposers.push(
     ctx.commands.register({
-      definitionId: "dsh-atelier.workflow",
+      definitionId: "dsh-atelier-agent.workflow",
       name: "atelier-workflow",
       description: "查看 workflow list/show。子命令: list | show <id>",
       handler: async (invocation) => {

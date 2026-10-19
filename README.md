@@ -1,4 +1,4 @@
-# dsh-atelier
+# dsh-atelier-agent
 
 pi atelier 的 dsh（DeepSeek Harness）移植版：基于 herdr/tmux 分屏的
 **外部 agent CLI 编排**插件。
@@ -21,8 +21,8 @@ dsh plugin --profile <name> add git+file:///path/to/dsh-atelier
 
 ```yaml
 - insert:
-    - id: dsh-atelier
-      name: 'dsh-atelier'
+    - id: dsh-atelier-agent
+      name: 'dsh-atelier-agent'
 ```
 
 本包的 `dsh.bundle.patch` 自带同样一行，经 `dsh plugin add` 会自动并入
