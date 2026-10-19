@@ -3,6 +3,47 @@
 本文件采用 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。
 版本号语义：patch=不改行为（可攒批）、minor=新能力/行为变化、高危走 -rc.n。
 
+## [0.2.0] - 2026-10-19
+
+peer 编排半边落地：`peer` 工具把任务派发到 herdr/tmux 分屏 pane 里的持久
+harness 会话（pi/hermes/claude/codex），文件契约回收结果，harness 原生
+resume 无损恢复；与 dsh 原生 `subagent` 互补共存。
+
+### Added
+
+- `peer` 工具：`{agent, task}` 单发、`tasks:[...]` 并行、`chain:[...]` 串行
+  链；默认异步派发，完成后自动推送回主会话；管理动作
+  `send/wait/read/peers/close/list/status`。
+- 迁移层（`core/ runtime/ registry/ lifecycle/ context/`）：pi atelier
+  逻辑机械搬迁，`.ts` 经 Node ≥23.6 type stripping 直跑，零构建；
+  `bun:sqlite` 已换 `node:sqlite`。
+- 命令：`/<agent> <task>`、`/<prompt> <param>`（scout-and-plan /
+  implement / implement-and-review / research-and-implement /
+  parallel-research / parallel-workers / design-review-implement 七个
+  模板）、`/atelier-resume`、`/atelier-workflow`。
+- hooks：systemPrompt 注入 8 个内置 agent 提示词 + 命令标记 + plan-mode
+  优先级提示；`exit_plan_mode` plan gate；`agent/pre-step` 视觉移交
+  （模型无视觉能力时转 visual peer）；session 锚点 + 孤儿认领。
+- harness 适配层：herdr/tmux 双复用器探测；`{provider}` 占位符与 mcode
+  适配（hermes 的 provider/model 复合名拆参）。
+- 配置三层：`~/.config/dsh-atelier/atelier.json`（优先）→
+  `~/.config/pi/atelier.json`（迁移回退）→ cordis config 行覆盖。
+- 测试：`test/smoke.js`（契约 + 真实 herdr 只读冒烟，11 例）、
+  `test/e2e-drive.mjs`（headless E2E，fake ctx 捕获注册面）。
+- 文档：README（安装/使用/设计约束）、AGENTS.md（结构/验证/发布约束）、
+  `docs/dsh-port-plan.md`（移植计划归档）。
+
+### Fixed
+
+- agent 消息提交改用 `promptAgent`，修 hermes peer 不提交输入的问题。
+
+### Verified
+
+- node v24.18.0：`node --check` 全量 + 模块图导入通过；冒烟 11/11。
+- E2E 注册面用例全通过（list/注入/plan gate/视觉移交/workflow/resume/
+  孤儿认领/registry 持久化）；真实 peer 派发用例（wait/tasks/chain/
+  peers/focus）需 pi CLI 在 PATH，发版机缺失未复跑。
+
 ## [0.1.0] - 2026-10-15
 
 首个可用版本：dsh 宿主内调用 herdr 的白名单工具面。
