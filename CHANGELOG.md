@@ -3,7 +3,7 @@
 本文件采用 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。
 版本号语义：patch=不改行为（可攒批）、minor=新能力/行为变化、高危走 -rc.n。
 
-## [Unreleased]
+## [0.3.0] - 2026-10-19
 
 ### Changed
 
@@ -13,8 +13,27 @@
   durable log source kind（`plugin:dsh-atelier-agent`）。
 - XDG 数据路径不变（`~/.config/dsh-atelier`、`$XDG_CACHE/dsh-atelier/
   subagents`、registry db），既有配置与 run 状态继续生效。
+- 兼容性声明收敛：删除无人读取的 `dsh.engines` 字段（dsh 实际只读顶层
+  `peerDependencies["@deepseek-ai/dsh"]`），补顶层 `engines.node >=23.6`
+  （`.ts` 迁移层靠 Node type stripping 直跑）。
 - 已装 profile 需把 dependencies 与 `dsh.profile.bundles` 里的 `dsh-atelier`
   改为 `dsh-atelier-agent`（link: 路径不变），否则 bundle 解析不到。
+
+### Added
+
+- npm 分发：包改为可发布状态（去 `private`、`publishConfig.access: public`、
+  补 `repository` 字段——Trusted Publishing 与 provenance 的硬性要求）；
+  安装方式新增 `dsh plugin --profile <name> add dsh-atelier-agent@<version>`。
+- CI：`release.yml` 的 tag 触发链路扩为「npm 发布（OIDC Trusted Publishing，
+  无长效 token）→ GitHub Release」；registry 已存在该版本时跳过发布，
+  重复推 tag 幂等。
+
+### Verified
+
+- node v24.18.0：`node --check` 全量 + 模块图导入通过；冒烟 11/11；
+  E2E 注册面用例全通过（真实 peer 派发用例需 pi CLI 在 PATH，发版机
+  缺失未复跑）。
+- `npm pack --dry-run` 核对 tarball 含 `cordis.patch.yml` 与全部源码目录。
 
 ## [0.2.0] - 2026-10-19
 
