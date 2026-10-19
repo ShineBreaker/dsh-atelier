@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 /**
- * 0.1.0 冒烟测试：契约 + 真实 herdr 只读调用。
+ * 冒烟测试：契约 + 真实 herdr 只读调用。
  * 运行：node test/smoke.js（需要 herdr server 在跑；无 server 时只读项会 FAIL）。
  * 写操作端到端（split/run/send/read 闭环）不在此自动跑，见 README「验证」。
  */
@@ -25,19 +25,25 @@ async function check(label, fn) {
 
 // ── 契约：apply 经假 ctx 注册，definition 符合 ToolDefinition 形状 ──
 
-let registered = null;
+const registeredNames = [];
 const fakeCtx = {
   tools: {
     register(def) {
-      registered = def;
+      registeredNames.push(def.name);
       return () => {};
     },
   },
+  on: () => () => {},
+  commands: { register: () => () => {} },
+  systemPrompt: { section: () => () => {} },
+  llm: { listModels: async () => [] },
+  logger: { info: () => {}, warn: () => {}, error: () => {} },
 };
 
 await check("apply 注册工具一次并交还反注册函数", () => {
   const dispose = plugin.apply(fakeCtx, {});
-  assert.equal(registered?.name, "herdr");
+  assert.ok(registeredNames.includes("herdr"));
+  assert.ok(registeredNames.includes("peer"));
   assert.equal(typeof dispose, "function");
 });
 
@@ -54,9 +60,9 @@ await check("definition 契约形状（ToolSchema + output + execute）", () => 
 });
 
 await check("enabled:false 不注册", () => {
-  registered = null;
+  registeredNames.length = 0;
   plugin.apply(fakeCtx, { enabled: false });
-  assert.equal(registered, null);
+  assert.equal(registeredNames.length, 0);
 });
 
 // ── 执行：参数薄验 ──
