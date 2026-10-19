@@ -1,0 +1,47 @@
+{
+  "name": "dsh-atelier",
+  "version": "0.1.0",
+  "private": true,
+  "description": "pi atelier 的 dsh 移植：外部 agent CLI 分屏编排（peer 工具派发 pi/hermes/claude/codex 等持久会话，文件契约回收，resume 无损恢复），与原生 subagent 互补共存",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "commands.js",
+    "hooks.js",
+    "lib/",
+    "tools/",
+    "core/",
+    "runtime/",
+    "registry/",
+    "lifecycle/",
+    "context/",
+    "cordis.patch.yml",
+    "test/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/dsh": "^0.2.0-rc.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "engines": {
+      "dsh": ">=0.2.0-rc.2"
+    }
+  }
+}
