@@ -167,6 +167,19 @@ export class HerdrBackend implements MultiplexerBackend {
     herdrExec(["pane", "run", paneId, text]);
   }
 
+  /**
+   * 向 agent pane 投递消息并提交。优先 `agent prompt`（kind-aware 提交语义
+   * 与状态跟踪）；pane 未被识别为 agent（或 agent blocked 拒收）时回退
+   * `pane run` + 一拍后 `send-keys Enter`——hermes 实测 `pane run` 只写
+   * 输入框不回车，且 Enter 与文本同拍到达会被其输入状态机吞掉。
+   */
+  promptAgent(paneId: string, text: string): void {
+    if (herdrExecMaybe(["agent", "prompt", paneId, text]) !== null) return;
+    herdrExec(["pane", "run", paneId, text]);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 400);
+    herdrExecMaybe(["pane", "send-keys", paneId, "Enter"]);
+  }
+
   /** 裸按键（Escape/Enter/Down/C-c），用于打断或应答权限门。 */
   sendKeys(paneId: string, keys: string[]): void {
     herdrExecMaybe(["pane", "send-keys", paneId, ...keys]);

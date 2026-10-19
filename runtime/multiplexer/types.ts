@@ -115,6 +115,18 @@ export interface MultiplexerBackend {
   sendText(paneId: string, text: string): void;
 
   /**
+   * 向 agent pane 投递一条用户消息并提交（peer 消息/舵手/补写专用；
+   * shell pane 的命令启动请走 sendText）。
+   *
+   * 为什么独立于 sendText：herdr `pane run` 对已识别 agent 走 prompt
+   * 等价路径，但实测 hermes kind 只把文本写进输入框不提交（pi 会提交）
+   * ——实现里在 run 之后补一发显式 Enter 兜底；对已正常提交的 harness
+   * 是空输入 Enter，无副作用。tmux 的 sendText 本就是 -l + Enter 两段式，
+   * 直接复用。
+   */
+  promptAgent?(paneId: string, text: string): void;
+
+  /**
    * 向 pane 发送裸按键（Escape/Enter/Down/C-c 等，用于打断/应答权限门）。
    * tmux: send-keys；herdr: pane send-keys。
    */

@@ -129,6 +129,11 @@ export class TmuxBackend implements MultiplexerBackend {
     tmuxExec(["send-keys", "-t", paneId, "Enter"]);
   }
 
+  /** tmux 的 sendText 本就是字面文本 + 显式 Enter 两段式，语义一致。 */
+  promptAgent(paneId: string, text: string): void {
+    this.sendText(paneId, text);
+  }
+
   /** 裸按键（Escape/Enter/Down/C-c）。 */
   sendKeys(paneId: string, keys: string[]): void {
     tmuxExecMaybe(["send-keys", "-t", paneId, ...keys]);

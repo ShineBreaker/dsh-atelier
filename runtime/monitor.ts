@@ -192,22 +192,31 @@ export async function waitForPeerMessage(
     const resultPath = path.join(peer.peerDir, `result-${seq}.md`);
     if (!fs.existsSync(resultPath)) {
       if (!remediated) {
-        remediated = true;
-        remediatedAt = Date.now();
-        try {
-          backend?.sendText(
-            peer.paneId,
-            `检测到你已停止工作但未按契约落盘。请立即把本条任务的最终结果` +
-              `（顶部含 Return Header）写入 ${resultPath}，并把 ${statusPath}` +
-              ` 覆写为 {"status":"completed","msgSeq":${seq}}。除此之外不要做任何事。`,
-          );
-          console.warn(
-            `[atelier:monitor] ${msgId} 判定停止但未落盘，已发补写指令`,
-          );
-        } catch {
-          /* 发送失败：窗口过后走 transcript 兜底 */
+        // 守卫：只给本轮有过 agent 活性证据的 pane 发补写——herdr 可识别
+        // agent（sawWorking/当前 agentStatus 非 null）。未注册 harness
+        // （mcode 等 agentStatus 恒 null）可能已退出回 shell，文本会被当
+        // shell 命令执行；跳过补写直接走 transcript 兜底（不留宽限期）。
+        const aliveEvidence =
+          sawWorking || backend?.agentStatus?.(peer.paneId) != null;
+        if (aliveEvidence) {
+          remediated = true;
+          remediatedAt = Date.now();
+          try {
+            (backend?.promptAgent ?? backend?.sendText)?.call(
+              backend,
+              peer.paneId,
+              `检测到你已停止工作但未按契约落盘。请立即把本条任务的最终结果` +
+                `（顶部含 Return Header）写入 ${resultPath}，并把 ${statusPath}` +
+                ` 覆写为 {"status":"completed","msgSeq":${seq}}。除此之外不要做任何事。`,
+            );
+            console.warn(
+              `[atelier:monitor] ${msgId} 判定停止但未落盘，已发补写指令`,
+            );
+          } catch {
+            /* 发送失败：窗口过后走 transcript 兜底 */
+          }
+          return null;
         }
-        return null;
       }
       if (Date.now() - remediatedAt < REMEDIATE_GRACE_MS) return null;
     }

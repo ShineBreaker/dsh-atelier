@@ -492,7 +492,7 @@ export function sendToPeer(
 
   if (busy) {
     // 舵手：直接注入文本，不打断当前 turn（harness 自行排队/消化）。
-    backend.sendText(peer.paneId, task);
+    (backend.promptAgent ?? backend.sendText).call(backend, peer.paneId, task);
     peer.lastStatus = "working";
     writePeerJson(peer);
     updatePeerMeta(peer.peerId, { lastStatus: "working" });
@@ -537,7 +537,11 @@ export function sendToPeer(
     harness: peer.harness,
   });
 
-  backend.sendText(peer.paneId, submissionText(peer, seq, task));
+  (backend.promptAgent ?? backend.sendText).call(
+    backend,
+    peer.paneId,
+    submissionText(peer, seq, task),
+  );
 
   peer.msgSeq = seq;
   peer.lastStatus = "working";
