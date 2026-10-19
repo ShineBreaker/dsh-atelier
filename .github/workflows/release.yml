@@ -1,0 +1,27 @@
+# tag 推送 → 自动建 GitHub Release（notes 取 CHANGELOG 对应段）。
+# 发版流程见 AGENTS.md「发布」：本地验证通过后再推 tag。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 截取 CHANGELOG 对应段
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          awk -v sec="## [$ver] " 'index($0,sec)==1{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "CHANGELOG 无 [$ver] 段"; exit 1; }
+      - name: 建 Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md \
+            || gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}

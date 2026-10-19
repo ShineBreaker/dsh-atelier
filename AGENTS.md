@@ -40,3 +40,5 @@ node test/e2e-drive.mjs <case|all>                                # headless E2E
 ## 发布
 
 同 dsh-agenote：纯 ESM 零依赖、link:/git 安装、不发 npm；`peerDependencies["@deepseek-ai/dsh"]` 与 `dsh.engines.dsh` 随 cohort 同步抬。
+
+差异一条：tag 推送由 `.github/workflows/release.yml` 自动建 GitHub Release（notes 取 CHANGELOG 对应段），不需要手动 `gh release create`；其余步骤（semver 定性、版本号+CHANGELOG 同 commit、tag 指向核对、推送前冷启动、cohort 同步抬）不变。
