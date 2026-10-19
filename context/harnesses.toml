@@ -1,8 +1,9 @@
 # atelier 内置 harness spec — 各 CLI harness 的功能入口声明
 #
 # 本文件是插件自带的默认值（随 atelier 分发，插件做了适配即开箱可用）。
-# 用户覆盖/扩展：~/.config/pi/atelier/harnesses.toml（同名 harness 逐字段
-# 覆盖此处，新名 harness 追加；spec 详见 runtime/harness/spec.ts）。
+# 用户覆盖/扩展：~/.config/dsh-atelier/harnesses.toml（同名 harness 逐字段
+# 覆盖此处，新名 harness 追加；旧路径 ~/.config/pi/atelier/harnesses.toml
+# 仍作迁移回退；spec 详见 runtime/harness/spec.ts）。
 #
 # 字段说明：
 #   binaries      = PATH 探测候选（command -v 按序试，首个命中即用）【必填】
@@ -52,13 +53,18 @@ approval-safe = ["--full-auto"]
 resume-args = ["resume", "{sessionId}"]
 
 # ── hermes ───────────────────────────────────────────────────────────────────
-# `hermes chat` 启动 TUI；--model 是常见约定的猜测，不生效时用 harnessArgs 覆盖。
+# `hermes chat` 启动 TUI。模型以 "provider/model" 复合名指定，spec 拆成
+# --provider + --model 两个独立参数（--model 的值不做内部路由解析，整串都是
+# 模型名）；model 无斜杠时只下 --model，纯 "hermes"（无模型段）走内置默认。
+# --yolo 跳过危险命令批准门——peerApproval=full 的无人值守派发必须带，否则
+# peer 会 silent 阻塞在批准弹窗。
 
 [harness.hermes]
 binaries = ["hermes"]
 herdr-kind = "hermes"
 subcommand = "chat"
-model-args = ["--model", "{model}"]
+model-args = ["--provider={provider}", "--model", "{model}"]
+approval-full = ["--yolo"]
 resume-args = ["chat", "--resume", "{sessionId}"]
 
 # ── opencode / omp ───────────────────────────────────────────────────────────
@@ -73,3 +79,15 @@ model-args = ["--model", "{model}"]
 binaries = ["omp"]
 herdr-kind = "omp"
 model-args = ["--model", "{model}"]
+
+# ── mcode (MiniMax Code) ─────────────────────────────────────────────────────
+# TUI 即 binary 本身；`-m provider/model` 原生复合名（无需 provider 拆分）。
+# herdr 无原生 kind → 启动走 sendText 兜底、完成检测全靠文件契约 + transcript
+# 启发（agentStatus 恒 null），是未注册 harness 路径的参考实现。
+# 注意：`--permission` 是 `exec` 子命令的 flag，顶层 TUI 不认（传了会直接
+# 退出回 shell）；TUI 权限策略是其会话内 "Full access" 设置，不在 CLI 面。
+
+[harness.mcode]
+binaries = ["mcode"]
+model-args = ["-m", "{model}"]
+resume-args = ["--session", "{sessionId}"]

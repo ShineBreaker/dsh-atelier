@@ -57,17 +57,22 @@ export function shellQuote(value: string): string {
 /** assembleCommand 的输入（launch 与 resume 共用；sessionId 有值即 resume 模式） */
 export type AssembleOpts = HarnessLaunchOpts & { sessionId?: string };
 
-const PLACEHOLDER = /\{(model|sessionId)\}/g;
+const PLACEHOLDER = /\{(model|provider|sessionId)\}/g;
 
 /**
- * 参数组渲染：token 内占位符替换为 shell 转义值；组内用了某占位符而对应值
- * 缺省 → 整组省略（如 model 未指定时 ["--model","{model}"] 不产生孤立的
- * "--model"）。组本身 undefined → 省略。显式空组 → 空组（用户 spec 用
- * `approval-full = []` 清除内置默认的途径）。
+ * 参数组渲染：token 内占位符替换为 shell 转义值；组内用了 {model} 或
+ * {sessionId} 而对应值缺省 → 整组省略（如 model 未指定时 ["--model",
+ * "{model}"] 不产生孤立的 "--model"）。组本身 undefined → 省略。显式空组
+ * → 空组（用户 spec 用 `approval-full = []` 清除内置默认的途径）。
+ *
+ * {provider} 例外：它由 model 的 "provider/model" 前缀拆分而来（仅当 spec
+ * 引用了 {provider} 才拆——未引用的 spec 把整串当模型名，向后兼容）。model
+ * 无斜杠时 provider 缺省，此时含 {provider} 的单个 token 被剔除（写成
+ * "--flag={provider}" 单 token 形态，flag 随值一起消失，不留孤儿 flag）。
  */
 function renderGroup(
   group: string[] | undefined,
-  vars: { model?: string; sessionId?: string },
+  vars: { model?: string; provider?: string; sessionId?: string },
   quote: (s: string) => string = shellQuote,
 ): string[] | undefined {
   if (!group) return undefined;
@@ -76,11 +81,14 @@ function renderGroup(
   if ((usesModel && vars.model === undefined) || (usesSession && vars.sessionId === undefined)) {
     return undefined;
   }
-  return group.map((t) =>
-    t.replace(PLACEHOLDER, (_m, key: string) =>
-      quote(vars[key === "model" ? "model" : "sessionId"]!),
-    ),
-  );
+  return group
+    .map((t) =>
+      t.replace(PLACEHOLDER, (_m, key: string) => {
+        const v = vars[key as "model" | "provider" | "sessionId"];
+        return v === undefined ? `{${key}}` : quote(v);
+      }),
+    )
+    .filter((t) => !t.includes("{provider}"));
 }
 
 /** launch/resume 共用的参数尾段（head + model-args + approval + extra）。 */
@@ -89,7 +97,21 @@ function commandParts(
   opts: AssembleOpts,
   quote: (s: string) => string,
 ): string[] {
-  const vars = { model: opts.model, sessionId: opts.sessionId };
+  // spec 任一参数组引用 {provider} 时，model 的 "provider/model" 前缀拆开喂
+  // 两个占位符（hermes 等 provider/model 分参 harness）；其余 spec 原样。
+  const splitsProvider = [
+    ...(spec.modelArgs ?? []),
+    ...(spec.resumeArgs ?? []),
+    ...(spec.subcommand ? [spec.subcommand] : []),
+  ].some((t) => t.includes("{provider}"));
+  let model = opts.model;
+  let provider: string | undefined;
+  if (splitsProvider && model?.includes("/")) {
+    const i = model.indexOf("/");
+    provider = model.slice(0, i);
+    model = model.slice(i + 1);
+  }
+  const vars = { model, provider, sessionId: opts.sessionId };
   const resume = opts.sessionId !== undefined;
   // resume 模式的 head 是 resume-args（自含子命令）；launch 模式是 subcommand
   const head = resume ? spec.resumeArgs : spec.subcommand ? [spec.subcommand] : [];
